@@ -33,7 +33,7 @@ Edit any draft, copy all three stories, or download UTF-8 text. Copy and downloa
 
 ## Architecture
 
-- React + TypeScript + CSS, built with Vite. No UI framework, remote fonts, analytics, authentication, billing, database, or remote persistence.
+- React + TypeScript + CSS, built with Vite. Fonts (Atkinson Hyperlegible, Red Hat Mono) are bundled from @fontsource, so no remote fonts load. No UI framework, analytics, authentication, billing, database, or remote persistence.
 - `src/domain.ts`: input validation, sourced-draft schema validation, system/user prompt separation, clean formatting and exports.
 - `src/server/google.ts` and `src/server/provider-router.ts`: opt-in Google Gemma REST adapter, fixed model, explicit transmission consent, sanitized failures, and no automatic fallback. Server status exposes only key-present status, never the key.
 - `src/adapter.ts`: injectable fetch adapter to Ollama `/api/tags`, `/api/show`, and `/api/chat`; JSON output, deterministic temperature, bounded generation, timeouts, no redirects, and local-model checks. No tool execution.
