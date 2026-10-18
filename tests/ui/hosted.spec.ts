@@ -14,7 +14,7 @@ test('mocked hosted flow requires consent, resets it after edits, and submits no
  await page.goto('/');await page.getByRole('button',{name:'Try sample'}).click();await page.getByLabel('Generation provider').selectOption('google');
  const send=page.getByRole('button',{name:'Send to Google'}),consent=page.getByRole('checkbox',{name:'I approve sending'});
  await expect(send).toBeDisabled();await consent.check();await expect(send).toBeEnabled();await page.getByLabel('Project name').fill('Synthetic test project');await expect(consent).not.toBeChecked();
- await consent.check();await send.click();await expect(page.locator('#draft')).toBeVisible();expect(submitted.provider).toBe('google');expect(submitted.googleConsent).toBe(true);expect(submitted.apiKey).toBeUndefined();expect(submitted.GEMINI_API_KEY).toBeUndefined();expect(calls).toBe(1);await expect(consent).not.toBeChecked();
+ await consent.check();await send.click();await page.getByRole('button',{name:'Edit text'}).click();await expect(page.locator('#draft')).toBeVisible();expect(submitted.provider).toBe('google');expect(submitted.googleConsent).toBe(true);expect(submitted.apiKey).toBeUndefined();expect(submitted.GEMINI_API_KEY).toBeUndefined();expect(calls).toBe(1);await expect(consent).not.toBeChecked();
  await page.getByLabel('Generation provider').selectOption('ollama');await expect(page.getByRole('button',{name:'Check connection',exact:true})).toBeVisible();
 });
 test('mocked quota error remains visible and does not blank UI or retry',async({page})=>{
