@@ -59,7 +59,7 @@ Hosted tests explicitly clear GEMINI_API_KEY for the test server and mock genera
 
 Challenge: https://dev.to/challenges/hacktoberfest-week2-2026-10-12
 
-The challenge emphasizes a specific paid-use hypothesis, open AI at the core, and writing quality. Before submission: choose/install a model, test generation with the synthetic sample, inspect all three real outputs, record a working demo, choose a repository license, and write an honest DEV post describing the source-preserving design and limitations. Publishing this source does not establish a working AI demo. No deployment, DEV post, or challenge submission has been completed. No payment or user-adoption claims have been established.
+The challenge emphasizes a specific paid-use hypothesis, open AI at the core, and writing quality. Before submission: choose/install a model, test generation with the synthetic sample, inspect all three real outputs, record a working demo, and write an honest DEV post describing the source-preserving design and limitations. Publishing this source does not establish a working AI demo. No deployment, DEV post, or challenge submission has been completed. No payment or user-adoption claims have been established.
 
 ## If the local preview is unavailable
 
@@ -84,4 +84,4 @@ Official documentation: [Gemma on the Gemini API](https://ai.google.dev/gemma/do
 
 ## Model and publication status
 
-Hosted integration is implemented and mock-tested; **real API testing is still pending**. Local inference is also untested with a real model, and no local model was configured at the latest inspection. No model weights or credentials are included. Tests use explicit fixtures, never a runtime fallback. Repository: https://github.com/prophen/one-project-many-stories. Publication does not establish a working real-model demo. This project has not selected a license; public visibility alone is not an open-source license grant.
+Hosted integration is implemented and mock-tested; **real API testing is still pending**. Local inference is also untested with a real model, and no local model was configured at the latest inspection. No model weights or credentials are included. Tests use explicit fixtures, never a runtime fallback. Repository: https://github.com/prophen/one-project-many-stories. Publication does not establish a working real-model demo. This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Nikema Prophet. Model licenses and third-party dependency licenses remain separate.
