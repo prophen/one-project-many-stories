@@ -17,7 +17,7 @@ export async function generateGoogle(input: unknown, options: {
         body: JSON.stringify({
           systemInstruction: {parts:[{text:messages[0].content}]},
           contents:[{role:'user',parts:[{text:messages[1].content}]}],
-          generationConfig:{temperature:0,maxOutputTokens:2500,thinkingConfig:{thinkingLevel:'minimal'}}
+          generationConfig:{temperature:0,maxOutputTokens:6000,thinkingConfig:{thinkingLevel:'minimal'}}
         })
       }
     );

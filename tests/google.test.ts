@@ -4,9 +4,17 @@ import {sample} from '../src/domain.ts';
 import {generateGoogle} from '../src/server/google.ts';
 import {providerStatus,generateForProvider} from '../src/server/provider-router.ts';
 import {GOOGLE_MODEL} from '../src/providers.ts';
-const plan={caseStudy:['problem','contribution','features','stack','tradeoffs','outcomes'],summary:['contribution','stack','outcomes'],demo:[]};
+import {storyFixture as plan} from './story-fixture';
 const success=()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(plan)}]}}]});
 const forbidden=async()=>{throw Error('Unexpected real network attempt');};
+test('accepts a single JSON Markdown fence while preserving source validation',async()=>{
+ const reply=(text:string)=>async()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text}]}}]});
+ const wrap=(value:unknown)=>'```json\n'+JSON.stringify(value)+'\n```';
+ assert.deepEqual(await generateGoogle(sample,{apiKey:'test-key',consent:true,fetcher:reply(wrap(plan))}),plan);
+ for(const text of ['Here is your plan:\n'+wrap(plan),wrap(plan)+'\nExplanation', '```json\n{broken}\n```',wrap({...plan,summary:['contribution','invented']})]) {
+  await assert.rejects(()=>generateGoogle(sample,{apiKey:'test-key',consent:true,fetcher:reply(text)}));
+ }
+});
 test('missing-key state does not make a network call',async()=>{await assert.rejects(()=>generateGoogle(sample,{consent:true,fetcher:forbidden}),/not configured/);});
 test('explicit Google transmission consent required before any request',async()=>{await assert.rejects(()=>generateGoogle(sample,{apiKey:'test-key',consent:false,fetcher:forbidden}),/Confirm/);});
 test('only configured boolean and fixed model are exposed by status',()=>{assert.deepEqual(providerStatus('test-key'),{google:{configured:true,model:GOOGLE_MODEL,realModelTested:false}});assert.equal(providerStatus().google.configured,false);assert.ok(!JSON.stringify(providerStatus('test-key')).includes('test-key'));});
@@ -14,7 +22,7 @@ test('REST request uses key header, fixed model, separated untrusted facts, no t
  let calls=0;const fetcher:typeof fetch=async(url,options)=>{calls++;assert.equal(url,`https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_MODEL}:generateContent`);assert.equal((options?.headers as Record<string,string>)['x-goog-api-key'],'test-key');assert.equal(options?.redirect,'error');const body=JSON.parse(options?.body as string);assert.equal(JSON.parse(body.contents[0].parts[0].text).name,sample.name);assert.match(body.systemInstruction.parts[0].text,/untrusted/);assert.equal(body.tools,undefined);assert.equal(body.generationConfig.thinkingConfig.thinkingLevel,'minimal');return success();};
  assert.deepEqual(await generateGoogle(sample,{apiKey:'test-key',consent:true,fetcher}),plan);assert.equal(calls,1);
 });
-test('server validator rejects invented source IDs from hosted output',async()=>{const fetcher:typeof fetch=async()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({...plan,summary:['contribution','Revenue grew 50%']})}]}}]});await assert.rejects(()=>generateGoogle(sample,{apiKey:'test-key',consent:true,fetcher}),/required source ID/);});
+test('server validator rejects invented source IDs from hosted output',async()=>{const fetcher:typeof fetch=async()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({...plan,summary:['contribution','Revenue grew 50%']})}]}}]});await assert.rejects(()=>generateGoogle(sample,{apiKey:'test-key',consent:true,fetcher}),/source IDs/);});
 test('provider errors never echo upstream content or keys and never retry',async()=>{
  for(const status of [401,403,404,429,500]){let calls=0;const fetcher:typeof fetch=async()=>{calls++;return new Response('PRIVATE CONTENT test-key',{status});};await assert.rejects(()=>generateGoogle(sample,{apiKey:'test-key',consent:true,fetcher}),e=>{assert.ok(e instanceof Error);assert.doesNotMatch(e.message,/PRIVATE CONTENT|test-key/);return true;});assert.equal(calls,1);}
 });

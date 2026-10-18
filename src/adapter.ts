@@ -13,7 +13,7 @@ export async function generate(input:unknown,model:unknown,fetcher:typeof fetch=
  if(!info.ok) throw Error('Could not verify that the model is local.');
  const metadata=await info.json();
  if(metadata.remote_host||metadata.remote_model) throw Error('Remote models are not supported. Choose a locally installed open-weight model.');
- const r=await fetcher(`${BASE}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,messages:prompt(facts),format:'json',stream:false,options:{temperature:0,num_predict:2500},keep_alive:0}),signal:AbortSignal.timeout(180000),redirect:'error'});
+ const r=await fetcher(`${BASE}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,messages:prompt(facts),format:'json',stream:false,options:{temperature:0,num_predict:6000},keep_alive:0}),signal:AbortSignal.timeout(180000),redirect:'error'});
  if(!r.ok) throw Error('Local generation failed. Check Ollama and try again.');
  const body=await r.json();
  if(typeof body.message?.content!=='string') throw Error('Missing model response.');

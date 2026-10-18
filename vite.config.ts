@@ -6,7 +6,7 @@ export default defineConfig({server:{host:'127.0.0.1',port:5188,strictPort:true}
  res.setHeader('Cache-Control','no-store');
  try {
  const origin=req.headers.origin;
- if(origin && origin!=='http://127.0.0.1:5188' && origin!=='http://localhost:5188') {res.statusCode=403;res.end(JSON.stringify({error:'Cross-origin requests are blocked.'}));return;}
+ if(origin && origin!==`http://127.0.0.1:${server.config.server.port}` && origin!==`http://localhost:${server.config.server.port}`) {res.statusCode=403;res.end(JSON.stringify({error:'Cross-origin requests are blocked.'}));return;}
  if(req.url==='/providers'&&req.method==='GET'){res.end(JSON.stringify(providerStatus(process.env.GEMINI_API_KEY)));return;}
  if(req.url==='/models'&&req.method==='GET'){res.end(JSON.stringify({models:await models()}));return;}
  if(req.url!=='/generate'||req.method!=='POST'){res.statusCode=404;res.end('{}');return;}

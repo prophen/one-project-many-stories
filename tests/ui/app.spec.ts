@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {sample,formatStory,type Stories} from '../../src/domain';
-const fixture:Stories={caseStudy:['problem','contribution','features','stack','tradeoffs','outcomes'],summary:['contribution','stack','outcomes'],demo:[]};
+import {storyFixture as fixture} from '../story-fixture';
 test('offline state, synthetic sample, tabs, responsive layout',async({page})=>{
  await page.route('**/api/models',r=>r.fulfill({status:400,json:{error:'offline'}}));
  await page.goto('/');await expect(page.getByText('Local model not connected')).toBeVisible();
@@ -42,4 +42,21 @@ test('confirmed demo actions require reconfirmation after source edits',async({p
  const confirm=page.getByRole('checkbox',{name:'I confirm I can show action 1'});await confirm.check();await expect(confirm).toBeChecked();
  await page.getByLabel('Implemented features',{exact:false}).fill('The prototype includes a board. No export exists.');await expect(confirm).not.toBeChecked();
  await confirm.check();await page.getByLabel('Screen action 1',{exact:true}).fill('Show a filter');await expect(confirm).not.toBeChecked();
+});
+
+test('separate source review, clean clipboard and download, edited mapping warning',async({page,context})=>{
+ await context.grantPermissions(['clipboard-read','clipboard-write']);
+ await page.route('**/api/models',r=>r.fulfill({json:{models:['test-fixture-model']}}));
+ await page.route('**/api/generate',r=>r.fulfill({json:{stories:fixture}}));
+ await page.goto('/');await page.getByRole('button',{name:'Try sample'}).click();await page.getByRole('button',{name:'Shape three stories'}).click();
+ await expect(page.locator('#draft')).toHaveValue(formatStory('caseStudy',fixture,sample));
+ await page.getByText('Review sources & qualifications',{exact:true}).click();
+ const review=page.locator('.source-review');await expect(review).toContainText(sample.tradeoffs);await expect(review).toContainText(fixture.caseStudy[0].text);await page.screenshot({path:'screenshots/generated-review.png',fullPage:true});
+ await page.getByRole('button',{name:'Copy stories',exact:true}).click();
+ const clipboard=await page.evaluate(()=>navigator.clipboard.readText());expect(clipboard).toContain(fixture.summary[0].text);expect(clipboard).not.toMatch(/source snapshot|\[contribution\]|sourceIds|REVIEW REQUIRED/);
+ const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:'Download text'}).click();
+ const stream=await (await downloaded).createReadStream();let text='';for await(const chunk of stream!)text+=chunk.toString();expect(text).toBe(clipboard);
+ await page.locator('#draft').fill('My revision');await expect(review).toContainText('may no longer match your edits');
+ await page.getByLabel('Project name').fill('New notes');await expect(review).toContainText('earlier source snapshot');
+ await page.setViewportSize({width:390,height:844});await expect(page.locator('body')).toHaveJSProperty('scrollWidth',390);
 });

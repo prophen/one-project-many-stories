@@ -15,51 +15,54 @@ Open http://127.0.0.1:5188. The app binds to loopback. The Vite development serv
 
 For generation, start your existing Ollama runtime (`ollama serve`) and install an open-weight instruction model of your choice **after checking its license, download size, available storage, and memory requirements**. The app never downloads models. Click **Check connection**, select an installed model, fill the three required fields, and click **Shape three stories**. Ollama must be available at `http://127.0.0.1:11434`; remote endpoints and cloud model aliases are rejected. No API keys are needed for Ollama. Google hosted mode requires a server-side key; see below.
 
-Current verification environment: Ollama responds with an empty model list. **Real-model generation is not yet tested.** Both the Ollama and Google hosted adapters still require real-model testing. Google setup is user-controlled and no real key has been handled by the agent. A successful build or mocked UI test does not establish real AI functionality.
+The user has exercised hosted generation, but the revised prose-writing contract has not yet been verified end to end with a real model. Local inference also needs real-model testing. Google setup is user-controlled and no real key has been handled by the agent. A successful build or mocked UI test does not establish real AI functionality.
 
 ## What it does
 
 Capture project name, audience/problem, personal contribution, implemented features, stack, tradeoffs, verified outcomes, and optional evidence URLs. The clearly labeled Patchwork example is entirely synthetic. It is input data, never a pre-generated AI success.
 
-A local model returns a compact plan of source IDs, not echoed or paraphrased prose. The server validates audience-specific contracts and the renderer resolves complete original passages, preserving qualifications:
+The selected model writes three audience-specific drafts from your notes:
 
-- **Case study:** separate problem, personal contribution, implementation, tools/skills, decisions/tradeoffs, and reported-outcome sections; missing sections explicitly say unknown, followed by evidence status.
-- **Hiring summary:** contribution first, relevant skills, and reported result. Those three source fields have a combined 140-word budget. Oversized input is rejected with a request to shorten it yourself; no qualifications are automatically removed. Total output adds short labels/review text.
-- **Demo:** add up to five optional screen actions, assign each a narration source, and explicitly confirm you can show it and that the narration is accurate. The model sequences only those confirmed actions. Editing action text, its source assignment, or linked fact clears confirmation. Without confirmed actions, the output reports no sequence and offers a preparation suggestion, clearly separated from demo steps.
+- **Case study:** a portfolio narrative connecting the problem, personal contribution, implementation, decisions, and qualified outcome.
+- **Hiring summary:** a contribution-led pitch of up to 180 words, emphasizing skills and demonstrated results while retaining relevant qualifications. The limit applies to the generated summary, not the source notes.
+- **Demo:** newly written spoken narration paired with your exact confirmed screen actions. The model cannot add or change actions. Editing an action, its source assignment, or linked fact clears confirmation. Without confirmed actions, the demo asks you to add them; it does not invent a walkthrough.
 
-This is **source-preserving assembly, not free paraphrasing**. The AI chooses the ordering of required source material and confirmed demo actions. Structural distinctions are enforced; persuasive writing quality and semantic factuality are not guaranteed. The synthetic sample has no pre-confirmed actions.
-Edit all three drafts, copy the complete bundle, or download UTF-8 text. Exports include the source snapshot, missing fields, and review status. Editing notes marks old drafts stale; editing drafts marks them for review. All content lives in memory until refresh or closing the tab. Download before leaving if needed.
+Each generated paragraph carries separate source IDs. The **Review sources & qualifications** view shows the original AI passages alongside their supporting notes and a complete source snapshot. Source mappings are model-provided: structural validation cannot prove that the prose is faithful or that qualifications were retained. Review all claims, negations, uncertainties, and limitations before sharing. Missing facts are listed separately; evidence URLs are never fetched.
+
+Edit any draft, copy all three stories, or download UTF-8 text. Copy and downloads contain only the project title and drafts, without source IDs, source snapshots, or review labels. Relevant qualifications belong in the writing itself. Editing notes marks drafts stale; manual edits warn that the original mappings may no longer apply. Content stays in memory until refresh or closing the tab.
 
 ## Architecture
 
 - React + TypeScript + CSS, built with Vite. No UI framework, remote fonts, analytics, authentication, billing, database, or remote persistence.
-- `src/domain.ts`: input validation, strict fact-ID plan parser, system/user prompt separation, source-linked formatting and export.
+- `src/domain.ts`: input validation, sourced-draft schema validation, system/user prompt separation, clean formatting and exports.
 - `src/server/google.ts` and `src/server/provider-router.ts`: opt-in Google Gemma REST adapter, fixed model, explicit transmission consent, sanitized failures, and no automatic fallback. Server status exposes only key-present status, never the key.
 - `src/adapter.ts`: injectable fetch adapter to Ollama `/api/tags`, `/api/show`, and `/api/chat`; JSON output, deterministic temperature, bounded generation, timeouts, no redirects, and local-model checks. No tool execution.
 - `vite.config.ts`: loopback development API, origin check, body limits, errors without raw upstream logs. User text is rendered as plain React text and textarea values. Never HTML, executable Markdown, or browser instructions.
-- The intended open-weight integration plans source ordering and confirmed demo sequencing; this integration is not yet validated with a real model. There is no canned generation fallback. The app is usable for collecting facts while disconnected, but cannot generate stories until a model is connected.
+- The open-weight integration writes audience-specific prose and sequences confirmed demo actions. The revised writing contract still needs real-model verification. There is no canned generation fallback. The app is usable for collecting facts while disconnected, but cannot generate stories until a model is connected.
 
 ## Guardrails and limits
 
-The parser accepts only the required source IDs and confirmed action IDs, rejecting freeform model text, missing required sections, duplicate IDs, wrong action/source links, malformed responses, and oversized input/output. This prevents freeform model claims from entering initial assembled drafts but **does not verify the truth of user notes**, prove relevance, or prevent misleading selection/omission. Manual edits are unvalidated and always flagged. Prompts are defense in depth, not a security guarantee. Text and evidence URLs are untrusted; URLs are never automatically fetched or rendered as clickable links. Exports remain untrusted text, especially if copied into another AI tool.
+The parser validates paragraph text and source IDs, required source coverage, summary length, distinct case-study/summary text, and exact confirmed demo action/source links. It rejects malformed responses, unknown or empty source references, extra fields, invented action IDs, duplicate actions, and oversized output. A single whole-response JSON Markdown fence is allowed; JSON is never extracted from surrounding prose or repaired. No canned output or automatic provider fallback is used.
 
-This is a local prototype, not a hardened hosted service. Do not expose the Vite server publicly. Ollama itself may have its own runtime memory/log behavior; this app makes no persistence guarantees about separately installed software. Model identity/license and writing quality must be checked before recording a challenge demo. Freeform narrative rewriting remains outside this version. Screen choreography is user-authored and user-confirmed; neither a checkbox nor source-ID validation proves that an action exists or that its narration is accurate.
+These checks validate structure, **not semantic factual accuracy**. Rewriting can introduce unsupported implications or omit qualifications even with valid source references. Prompts require faithful paraphrasing and forbid invented claims; human review is necessary. Manual edits are unvalidated. Text is rendered as plain text; evidence URLs are untrusted and are not fetched.
+
+This is a local prototype, not a hardened hosted service. Do not expose the Vite server publicly. Ollama itself may have its own runtime memory/log behavior; this app makes no persistence guarantees about separately installed software. Model identity/license and writing quality must be checked before recording a challenge demo. Narrative rewriting is now part of generation and needs human factual review. Screen choreography is user-authored and user-confirmed; neither a checkbox nor source-ID validation proves that an action exists or that its narration is accurate.
 
 ## Verification
 
 ```sh
-npm test          # 33 unit/adapter tests; fake transport, no real inference
+npm test          # unit/adapter tests; fake transport, no real inference
 npm run build    # strict TypeScript and production frontend build
-npm run test:ui  # Chrome browser; local server starts automatically
+npm run test:ui  # Chrome browser; isolated key-free server starts on port 5189
 ```
 
-Hosted tests explicitly clear GEMINI_API_KEY for the test server and mock generation; they make no real Google requests. Browser tests use installed Google Chrome (`channel: chrome`). They cover disconnected setup, sample input, tabs, mobile overflow, generation errors, edited drafts, stale snapshots, downloads, and confirmation invalidation after action/source edits. Generated-response UI tests are explicitly mocked. Screenshots of the real interface (with offline transport mocked) are written to `screenshots/desktop.png` and `screenshots/mobile.png`.
+Hosted tests explicitly clear GEMINI_API_KEY for the test server and mock generation; they make no real Google requests. The browser test server uses port 5189 so it does not compete with the private hosted launcher on 5188. Browser tests use installed Google Chrome (`channel: chrome`). They cover disconnected setup, sample input, tabs, mobile overflow, generation errors, edited drafts, stale snapshots, downloads, and confirmation invalidation after action/source edits. Generated-response UI tests are explicitly mocked. Screenshots of the real interface (with offline transport mocked) are written to `screenshots/desktop.png` and `screenshots/mobile.png`.
 
 ## Challenge handoff
 
 Challenge: https://dev.to/challenges/hacktoberfest-week2-2026-10-12
 
-The challenge emphasizes a specific paid-use hypothesis, open AI at the core, and writing quality. Before submission: choose/install a model, test generation with the synthetic sample, inspect all three real outputs, record a working demo, and write an honest DEV post describing the source-preserving design and limitations. Publishing this source does not establish a working AI demo. No deployment, DEV post, or challenge submission has been completed. No payment or user-adoption claims have been established.
+The challenge emphasizes a specific paid-use hypothesis, open AI at the core, and writing quality. Before submission: choose/install a model, test generation with the synthetic sample, inspect all three real outputs, record a working demo, and write an honest DEV post describing AI rewriting, source review, and limitations. Publishing this source does not establish a working AI demo. No deployment, DEV post, or challenge submission has been completed. No payment or user-adoption claims have been established.
 
 ## If the local preview is unavailable
 
@@ -84,4 +87,4 @@ Official documentation: [Gemma on the Gemini API](https://ai.google.dev/gemma/do
 
 ## Model and publication status
 
-Hosted integration is implemented and mock-tested; **real API testing is still pending**. Local inference is also untested with a real model, and no local model was configured at the latest inspection. No model weights or credentials are included. Tests use explicit fixtures, never a runtime fallback. Repository: https://github.com/prophen/one-project-many-stories. Publication does not establish a working real-model demo. This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Nikema Prophet. Model licenses and third-party dependency licenses remain separate.
+Hosted integration is implemented and mock-tested; **real-model verification of the revised writing flow is still pending**. Local inference is also untested with a real model, and no local model was configured at the latest inspection. No model weights or credentials are included. Tests use explicit fixtures, never a runtime fallback. Repository: https://github.com/prophen/one-project-many-stories. Publication does not establish a working real-model demo. This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Nikema Prophet. Model licenses and third-party dependency licenses remain separate.
