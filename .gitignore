@@ -17,3 +17,5 @@ screenshots/
 *.zip
 QUALITY_REVIEW.md
 VERIFICATION.md
+
+.vercel/

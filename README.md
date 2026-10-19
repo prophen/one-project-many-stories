@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5188. The app binds to loopback. The Vite development server includes the local model API; `dist/` alone is only a frontend, not a working inference deployment.
+Open http://127.0.0.1:5188. The app binds to loopback. The Vite development server includes the local model API. On Vercel, the `api/` functions provide hosted Google generation; `dist/` alone is still only a frontend.
 
 For generation, start your existing Ollama runtime (`ollama serve`) and install an open-weight instruction model of your choice **after checking its license, download size, available storage, and memory requirements**. The app never downloads models. Click **Check connection**, select an installed model, fill the three required fields, and click **Shape three stories**. Ollama must be available at `http://127.0.0.1:11434`; remote endpoints and cloud model aliases are rejected. No API keys are needed for Ollama. Google hosted mode requires a server-side key; see below.
 
@@ -46,7 +46,7 @@ The parser validates paragraph text and source IDs, required source coverage, su
 
 These checks validate structure, **not semantic factual accuracy**. Rewriting can introduce unsupported implications or omit qualifications even with valid source references. Prompts require faithful paraphrasing and forbid invented claims; human review is necessary. Manual edits are unvalidated. Text is rendered as plain text; evidence URLs are untrusted and are not fetched.
 
-This is a local prototype, not a hardened hosted service. Do not expose the Vite server publicly. Ollama itself may have its own runtime memory/log behavior; this app makes no persistence guarantees about separately installed software. Model identity/license and writing quality must be checked before recording a challenge demo. Narrative rewriting is now part of generation and needs human factual review. Screen choreography is user-authored and user-confirmed; neither a checkbox nor source-ID validation proves that an action exists or that its narration is accurate.
+Keep the Vite development server local. Vercel deployment uses separate hosted-only functions; it does not expose the local Ollama adapter. Ollama itself may have its own runtime memory/log behavior; this app makes no persistence guarantees about separately installed software. Model identity/license and writing quality must be checked before recording a challenge demo. Narrative rewriting is now part of generation and needs human factual review. Screen choreography is user-authored and user-confirmed; neither a checkbox nor source-ID validation proves that an action exists or that its narration is accurate.
 
 ## Verification
 
@@ -70,7 +70,7 @@ Run `npm run dev` in this project and keep that terminal running. Wait for Vite'
 
 ## Google hosted Gemma setup (optional)
 
-The server-side REST adapter defaults to `gemma-4-26b-a4b-it`. Local Ollama remains the default selection. Google receives all submitted fact fields, evidence-link text, and demo actions only when you select hosted mode, approve the disclosure checkbox, and click **Send to Google & shape stories**. Editing notes clears consent. Free-tier prompts and responses may be used to improve Google products; use synthetic or public data for initial testing.
+The server-side REST adapter defaults to `gemma-4-26b-a4b-it`. Google hosted is selected by default when the server reports a configured key; otherwise local Ollama is selected. An explicit provider choice is preserved for the tab session. Hosted transmission still requires consent for each generation. Google receives all submitted fact fields, evidence-link text, and demo actions only when you select hosted mode, approve the disclosure checkbox, and click **Send to Google & shape stories**. Editing notes clears consent. Free-tier prompts and responses may be used to improve Google products; use synthetic or public data for initial testing.
 
 Google currently lists Gemma 4 input/output as free, with no paid tier listed. Project quotas and availability apply; this is not unlimited access. The app does not enable billing, switch models, retry with paid models, or automatically fall back to another provider.
 
@@ -88,3 +88,18 @@ Official documentation: [Gemma on the Gemini API](https://ai.google.dev/gemma/do
 ## Model and publication status
 
 Hosted integration is implemented and mock-tested; **real-model verification of the revised writing flow is still pending**. Local inference is also untested with a real model, and no local model was configured at the latest inspection. No model weights or credentials are included. Tests use explicit fixtures, never a runtime fallback. Repository: https://github.com/prophen/one-project-many-stories. Publication does not establish a working real-model demo. This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Nikema Prophet. Model licenses and third-party dependency licenses remain separate.
+
+## Deploying to Vercel
+
+Deployment support is implemented but has not yet been verified on Vercel. No deployment was created by the agent.
+
+1. Import this repository into a Vercel project. Select the Vite framework preset and Node.js 22.x or newer supported by Vercel. The checked-in `vercel.json` sets `npm ci`, `npm run build`, and the `dist` output directory.
+2. Privately add **GEMINI_API_KEY** under Project Settings → Environment Variables as a **Secret** for Production, and Preview if you want preview inference. Do not use a `VITE_` prefix. No credential file is required.
+3. Create a new deployment after configuring the variable. Existing deployments do not receive later environment changes.
+4. Verify `/api/providers` reports Google configured and local unavailable. The response contains no key. Open the app, load only synthetic notes, explicitly approve sending them to Google, and generate. Review all three outputs before describing the deployed flow as verified.
+
+`api/providers.ts`, `api/models.ts`, and `api/generate.ts` are Node.js Vercel functions. They share `src/server/hosted-http.ts`, return uncached JSON, enforce HTTP methods and same-origin browser requests, limit generation request bodies to 40,000 bytes, and reuse the Google consent check and draft/source validator. Generation has a 180-second function limit around the adapter's 120-second upstream timeout. There is no model fallback. Ollama remains available through `npm run dev` on your computer and is disabled in the deployed interface.
+
+The hosted generation endpoint uses the deployment owner's Google quota. It has no application authentication or durable rate limiter; same-origin checks and the consent checkbox are not access control. Use Vercel deployment protection for a private demo, or decide on public access and quota controls before sharing an unrestricted URL. Do not add real private project data without a separate data-handling decision. No request facts, model responses, or secrets are explicitly logged by the app; hosting/provider retention remains governed by those services.
+
+Tests call the hosted handlers with synthetic fixtures and mocked Google transport; this does not establish deployed routing or real-model quality. After an approved deployment, verify the full deployed browser → function → Google → draft flow separately.
