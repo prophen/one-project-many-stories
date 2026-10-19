@@ -11,13 +11,19 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5188. The app binds to loopback. The Vite development server includes the local model API. On Vercel, the `api/` functions provide hosted Google generation; `dist/` alone is still only a frontend.
+Open http://127.0.0.1:5188. The app binds to loopback. It opens on a short landing page; **Start with your project** or **Explore a synthetic sample** takes you to the Facts screen. The Vite development server includes the local model API. On Vercel, the `api/` functions provide hosted Google generation; `dist/` alone is still only a frontend.
 
-For generation, start your existing Ollama runtime (`ollama serve`) and install an open-weight instruction model of your choice **after checking its license, download size, available storage, and memory requirements**. The app never downloads models. Click **Check connection**, select an installed model, fill the three required fields, and click **Shape three stories**. Ollama must be available at `http://127.0.0.1:11434`; remote endpoints and cloud model aliases are rejected. No API keys are needed for Ollama. Google hosted mode requires a server-side key; see below.
+For generation, start your existing Ollama runtime (`ollama serve`) and install an open-weight instruction model of your choice **after checking its license, download size, available storage, and memory requirements**. The app never downloads models. On the Facts screen, click **Check connection**, select an installed model, fill the three required fields, and click **Shape three stories**. Ollama must be available at `http://127.0.0.1:11434`; remote endpoints and cloud model aliases are rejected. No API keys are needed for Ollama. Google hosted mode requires a server-side key; see below.
 
 The user has exercised hosted generation, but the revised prose-writing contract has not yet been verified end to end with a real model. Local inference also needs real-model testing. Google setup is user-controlled and no real key has been handled by the agent. A successful build or mocked UI test does not establish real AI functionality.
 
 ## What it does
+
+The app has three screens, linked from the top bar and the URL hash (`#home`, `#facts`, `#stories`):
+
+- **Home:** a landing page that explains the three drafts, shows a sample case study excerpt with source underlines, and lists what leaves your browser. It never sends anything.
+- **Facts:** where you enter notes, pick a provider, and generate.
+- **Stories:** the three drafts, available once a draft exists.
 
 Capture project name, audience/problem, personal contribution, implemented features, stack, tradeoffs, verified outcomes, and optional evidence URLs. The clearly labeled Patchwork example is entirely synthetic. It is input data, never a pre-generated AI success.
 
@@ -27,13 +33,14 @@ The selected model writes three audience-specific drafts from your notes:
 - **Hiring summary:** a contribution-led pitch of up to 180 words, emphasizing skills and demonstrated results while retaining relevant qualifications. The limit applies to the generated summary, not the source notes.
 - **Demo:** newly written spoken narration paired with your exact confirmed screen actions. The model cannot add or change actions. Editing an action, its source assignment, or linked fact clears confirmation. Without confirmed actions, the demo asks you to add them; it does not invent a walkthrough.
 
-Each generated paragraph carries separate source IDs. The **Review sources & qualifications** view shows the original AI passages alongside their supporting notes and a complete source snapshot. Source mappings are model-provided: structural validation cannot prove that the prose is faithful or that qualifications were retained. Review all claims, negations, uncertainties, and limitations before sharing. Missing facts are listed separately; evidence URLs are never fetched.
+Each generated paragraph carries separate source IDs. On the Stories screen, the **Sources** view underlines each AI passage in the color of its first source and tags it with every source it cites; **Compare with your notes** opens the supporting notes, and **All notes these drafts were built from** shows the complete source snapshot. **Edit text** switches to the editable draft. The **Facts each draft cites** grid shows which notes each draft used and marks blank notes as missing, treated as unknown. Source mappings are model-provided: structural validation cannot prove that the prose is faithful or that qualifications were retained. Review all claims, negations, uncertainties, and limitations before sharing. Evidence URLs are never fetched.
 
 Edit any draft, copy all three stories, or download UTF-8 text. Copy and downloads contain only the project title and drafts, without source IDs, source snapshots, or review labels. Relevant qualifications belong in the writing itself. Editing notes marks drafts stale; manual edits warn that the original mappings may no longer apply. Content stays in memory until refresh or closing the tab.
 
 ## Architecture
 
 - React + TypeScript + CSS, built with Vite. Fonts (Atkinson Hyperlegible, Red Hat Mono) are bundled from @fontsource, so no remote fonts load. No UI framework, analytics, authentication, billing, database, or remote persistence.
+- `src/main.tsx`: the Home, Facts, and Stories screens, with hash-based navigation and focus moved to each screen's heading.
 - `src/domain.ts`: input validation, sourced-draft schema validation, system/user prompt separation, clean formatting and exports.
 - `src/server/google.ts` and `src/server/provider-router.ts`: opt-in Google Gemma REST adapter, fixed model, explicit transmission consent, sanitized failures, and no automatic fallback. Server status exposes only key-present status, never the key.
 - `src/adapter.ts`: injectable fetch adapter to Ollama `/api/tags`, `/api/show`, and `/api/chat`; JSON output, deterministic temperature, bounded generation, timeouts, no redirects, and local-model checks. No tool execution.
@@ -56,13 +63,13 @@ npm run build    # strict TypeScript and production frontend build
 npm run test:ui  # Chrome browser; isolated key-free server starts on port 5189
 ```
 
-Hosted tests explicitly clear GEMINI_API_KEY for the test server and mock generation; they make no real Google requests. The browser test server uses port 5189 so it does not compete with the private hosted launcher on 5188. Browser tests use installed Google Chrome (`channel: chrome`). They cover disconnected setup, sample input, tabs, mobile overflow, generation errors, edited drafts, stale snapshots, downloads, and confirmation invalidation after action/source edits. Generated-response UI tests are explicitly mocked. Screenshots of the real interface (with offline transport mocked) are written to `screenshots/desktop.png` and `screenshots/mobile.png`.
+Hosted tests explicitly clear GEMINI_API_KEY for the test server and mock generation; they make no real Google requests. The browser test server uses port 5189 so it does not compete with the private hosted launcher on 5188. Browser tests use installed Google Chrome (`channel: chrome`). They cover the landing page (entry points, no automatic generation, keyboard entry, dark mode, 320px reflow), disconnected setup, sample input, tabs, mobile overflow, generation errors, edited drafts, stale snapshots, downloads, and confirmation invalidation after action/source edits. Generated-response UI tests are explicitly mocked. Screenshots of the real interface (with offline transport mocked) are written to `screenshots/`: `desktop.png` and `mobile.png` for the Facts screen, `generated-review.png` for the Stories source view with mocked output, and `landing-desktop.png`, `landing-dark.png`, and `landing-mobile.png` for the landing page.
 
 ## Challenge handoff
 
 Challenge: https://dev.to/challenges/hacktoberfest-week2-2026-10-12
 
-The challenge emphasizes a specific paid-use hypothesis, open AI at the core, and writing quality. Before submission: choose/install a model, test generation with the synthetic sample, inspect all three real outputs, record a working demo, and write an honest DEV post describing AI rewriting, source review, and limitations. Publishing this source does not establish a working AI demo. No deployment, DEV post, or challenge submission has been completed. No payment or user-adoption claims have been established.
+The challenge emphasizes a specific paid-use hypothesis, open AI at the core, and writing quality. Before submission: choose/install a model, test generation with the synthetic sample, inspect all three real outputs, record a working demo, and write an honest DEV post describing AI rewriting, source review, and limitations. Publishing this source does not establish a working AI demo. Vercel builds preview deployments from pull requests, but the deployed generation flow has not been verified, and no DEV post or challenge submission has been completed. No payment or user-adoption claims have been established.
 
 ## If the local preview is unavailable
 
@@ -91,7 +98,7 @@ Hosted integration is implemented and mock-tested; **real-model verification of 
 
 ## Deploying to Vercel
 
-The first user-created Vercel deployment of commit 3821eed failed at function startup because emitted JavaScript retained TypeScript import extensions. Server imports now target JavaScript, and a regression test compiles and runs all API entry points under plain Node ESM. This fix still needs a new deployment and verification; no deployment was created by the agent.
+The first user-created Vercel deployment of commit 3821eed failed at function startup because emitted JavaScript retained TypeScript import extensions. Server imports now target JavaScript, and a regression test compiles and runs all API entry points under plain Node ESM. Later commits build successfully on Vercel (the preview for pull request #3 reported Ready), but hosted generation on a deployment has not yet been verified with a real key.
 
 1. Import this repository into a Vercel project. Select the Vite framework preset and Node.js 22.x or newer supported by Vercel. The checked-in `vercel.json` sets `npm ci`, `npm run build`, and the `dist` output directory.
 2. Privately add **GEMINI_API_KEY** under Project Settings → Environment Variables as a **Secret** for Production, and Preview if you want preview inference. Do not use a `VITE_` prefix. No credential file is required.
