@@ -3,7 +3,7 @@ import {sample,formatStory,type Stories} from '../../src/domain';
 import {storyFixture as fixture} from '../story-fixture';
 test('offline state, synthetic sample, tabs, responsive layout',async({page})=>{
  await page.route('**/api/models',r=>r.fulfill({status:400,json:{error:'offline'}}));
- await page.goto('/');await expect(page.getByText('Local model not connected')).toBeVisible();
+ await page.goto('/#facts');await expect(page.getByText('Local model not connected')).toBeVisible();
  await expect(page.getByRole('button',{name:'Shape three stories'})).toBeDisabled();await expect(page.locator('#generate-why')).toContainText('Add project name, problem, contribution.');
  await page.getByRole('button',{name:'Try sample'}).click();await expect(page.getByLabel('Project name')).toHaveValue(sample.name);
  await expect(page.getByRole('button',{name:'Stories',exact:true})).toBeDisabled();
@@ -13,7 +13,7 @@ test('offline state, synthetic sample, tabs, responsive layout',async({page})=>{
 test('mock transport: generated output, edits, stale sources, download',async({page})=>{
  await page.route('**/api/models',r=>r.fulfill({json:{models:['test-fixture-model']}}));
  await page.route('**/api/generate',r=>r.fulfill({json:{stories:fixture}}));
- await page.goto('/');await page.getByRole('button',{name:'Try sample'}).click();await page.getByRole('button',{name:'Shape three stories'}).click();
+ await page.goto('/#facts');await page.getByRole('button',{name:'Try sample'}).click();await page.getByRole('button',{name:'Shape three stories'}).click();
  await expect(page.getByRole('heading',{name:'Your stories'})).toBeFocused();await expect(page.locator('#notes')).toHaveCount(0);
  await expect(page.locator('.source-review .passage').first()).toContainText(fixture.caseStudy[0].text);await expect(page.locator('.source-review .passage').first().locator('.chip')).toHaveText(['Problem','Contribution','Features']);
  await page.getByRole('button',{name:'Edit text'}).click();await expect(page.getByLabel('Portfolio case study',{exact:true})).toContainText('');await expect(page.locator('#draft')).toHaveValue(formatStory('caseStudy',fixture,sample));
@@ -25,21 +25,21 @@ test('mock transport: generated output, edits, stale sources, download',async({p
 });
 test('generation errors never produce a fake success',async({page})=>{
  await page.route('**/api/models',r=>r.fulfill({json:{models:['test-fixture-model']}}));await page.route('**/api/generate',r=>r.fulfill({status:400,json:{error:'Unsupported claim rejected'}}));
- await page.goto('/');await page.getByRole('button',{name:'Try sample'}).click();await page.getByRole('button',{name:'Shape three stories'}).click();await expect(page.getByRole('status')).toHaveText('Unsupported claim rejected');await expect(page.getByRole('heading',{name:'Your facts'})).toBeVisible();await expect(page.getByRole('button',{name:'Stories',exact:true})).toBeDisabled();await expect(page.locator('#draft')).toHaveCount(0);
+ await page.goto('/#facts');await page.getByRole('button',{name:'Try sample'}).click();await page.getByRole('button',{name:'Shape three stories'}).click();await expect(page.getByRole('status')).toHaveText('Unsupported claim rejected');await expect(page.getByRole('heading',{name:'Your facts'})).toBeVisible();await expect(page.getByRole('button',{name:'Stories',exact:true})).toBeDisabled();await expect(page.locator('#draft')).toHaveCount(0);
 });
 test('real local API rejects cross-origin generation and invalid facts',async({request})=>{
  const cross=await request.post('/api/generate',{headers:{Origin:'https://untrusted.example'},data:{facts:sample,model:'none'}});expect(cross.status()).toBe(403);
  const invalid=await request.post('/api/generate',{data:{facts:{},model:'none'}});expect(invalid.status()).toBe(400);expect((await invalid.json()).error).toContain('Each fact');
 });
 test('untrusted markup stays text and keyboard skip link works',async({page})=>{
- await page.route('**/api/models',r=>r.fulfill({json:{models:[]}}));await page.goto('/');
+ await page.route('**/api/models',r=>r.fulfill({json:{models:[]}}));await page.goto('/#facts');
  await page.keyboard.press('Tab');await expect(page.getByRole('link',{name:'Skip to main content'})).toBeFocused();await page.keyboard.press('Enter');
  await page.getByLabel('Project name').fill('<img src=x onerror=alert(1)>');await expect(page.locator('img')).toHaveCount(0);await expect(page.getByLabel('Project name')).toHaveValue('<img src=x onerror=alert(1)>');
  await expect(page.getByText('No installed local models found.')).toBeVisible();
 });
 
 test('confirmed demo actions require reconfirmation after source edits',async({page})=>{
- await page.route('**/api/models',r=>r.fulfill({json:{models:[]}}));await page.goto('/');await page.getByRole('button',{name:'Try sample'}).click();
+ await page.route('**/api/models',r=>r.fulfill({json:{models:[]}}));await page.goto('/#facts');await page.getByRole('button',{name:'Try sample'}).click();
  await page.getByRole('button',{name:'Add screen action'}).click();await page.getByLabel('Screen action 1',{exact:true}).fill('Show the synthetic board');
  const confirm=page.getByRole('checkbox',{name:'I confirm I can show action 1'});await confirm.check();await expect(confirm).toBeChecked();
  await page.getByLabel('Implemented features',{exact:false}).fill('The prototype includes a board. No export exists.');await expect(confirm).not.toBeChecked();
@@ -50,7 +50,7 @@ test('separate source review, clean clipboard and download, edited mapping warni
  await context.grantPermissions(['clipboard-read','clipboard-write']);
  await page.route('**/api/models',r=>r.fulfill({json:{models:['test-fixture-model']}}));
  await page.route('**/api/generate',r=>r.fulfill({json:{stories:fixture}}));
- await page.goto('/');await page.getByRole('button',{name:'Try sample'}).click();await page.getByRole('button',{name:'Shape three stories'}).click();
+ await page.goto('/#facts');await page.getByRole('button',{name:'Try sample'}).click();await page.getByRole('button',{name:'Shape three stories'}).click();
  const review=page.locator('.source-review');await page.getByText('All notes these drafts were built from',{exact:true}).click();await expect(review).toContainText(sample.tradeoffs);await expect(review).toContainText(fixture.caseStudy[0].text);await page.screenshot({path:'screenshots/generated-review.png',fullPage:true});
  await page.getByRole('button',{name:'Copy stories',exact:true}).click();
  const clipboard=await page.evaluate(()=>navigator.clipboard.readText());expect(clipboard).toContain(fixture.summary[0].text);expect(clipboard).not.toMatch(/source snapshot|\[contribution\]|sourceIds|review before sharing/);
@@ -62,7 +62,7 @@ test('separate source review, clean clipboard and download, edited mapping warni
 });
 
 test('removing screen actions preserves keyboard focus on next, previous, or add action',async({page})=>{
- await page.route('**/api/models',r=>r.fulfill({json:{models:[]}}));await page.goto('/');
+ await page.route('**/api/models',r=>r.fulfill({json:{models:[]}}));await page.goto('/#facts');
  for(let i=1;i<=3;i++){await page.getByRole('button',{name:'Add screen action',exact:true}).click();await page.getByLabel(`Screen action ${i}`,{exact:true}).fill(`Action ${i}`);}
  await page.getByRole('button',{name:'Remove action 2',exact:true}).focus();await page.keyboard.press('Enter');
  await expect(page.getByLabel('Screen action 2',{exact:true})).toHaveValue('Action 3');await expect(page.getByLabel('Screen action 2',{exact:true})).toBeFocused();
@@ -73,7 +73,7 @@ test('removing screen actions preserves keyboard focus on next, previous, or add
 test('stories reflow at 320px and maintain a level-one heading and ordered demo headings',async({page})=>{
  await page.route('**/api/models',r=>r.fulfill({json:{models:['test-fixture-model']}}));
  await page.route('**/api/generate',r=>{const action=r.request().postDataJSON().facts.demoActions[0];return r.fulfill({json:{stories:{...fixture,demo:[{actionId:action.id,factId:action.factId,narration:'This synthetic prototype includes a board, filters, and CSV export.'}]}}});});
- await page.setViewportSize({width:320,height:800});await page.goto('/');await page.getByRole('button',{name:'Try sample'}).click();
+ await page.setViewportSize({width:320,height:800});await page.goto('/#facts');await page.getByRole('button',{name:'Try sample'}).click();
  await page.getByRole('button',{name:'Add screen action',exact:true}).click();await page.getByLabel('Screen action 1',{exact:true}).fill('Show synthetic board');await page.getByRole('checkbox',{name:'I confirm I can show action 1'}).check();await page.getByRole('button',{name:'Shape three stories'}).click();
  await expect(page.getByRole('heading',{level:1,name:'Your stories'})).toBeFocused();
  for(const format of ['Case study','Hiring summary','Demo outline']){
