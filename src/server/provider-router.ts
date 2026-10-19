@@ -1,6 +1,6 @@
-import { generateGoogle } from './google.ts';
-import { GOOGLE_MODEL } from '../providers.ts';
-import type { Stories } from '../domain.ts';
+import { generateGoogle } from './google.js';
+import { GOOGLE_MODEL } from '../providers.js';
+import type { Stories } from '../domain.js';
 export function providerStatus(apiKey?:string) {
   return {google:{configured:Boolean(apiKey?.trim()),model:GOOGLE_MODEL,realModelTested:false}};
 }

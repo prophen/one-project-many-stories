@@ -1,5 +1,5 @@
-import {generateGoogle} from './google.ts';
-import {providerStatus} from './provider-router.ts';
+import {generateGoogle} from './google.js';
+import {providerStatus} from './provider-router.js';
 
 const headers={'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8'};
 const json=(body:unknown,status=200)=>Response.json(body,{status,headers});

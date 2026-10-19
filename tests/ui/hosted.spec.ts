@@ -35,7 +35,7 @@ test('hosted setup check shows progress and a visible ready or missing result',a
 test('hosted setup failure is visible',async({page})=>{
  await page.goto('/');await page.getByLabel('Generation provider').selectOption('google');
  await page.route('**/api/providers',r=>r.abort());await page.getByRole('button',{name:'Check hosted setup',exact:true}).click();
- await expect(page.getByRole('status')).toContainText('Hosted setup check failed');
+ await expect(page.getByRole('status')).toContainText('Hosted setup check failed');await expect(page.getByText('Hosted setup check failed — key status unknown',{exact:true})).toBeVisible();await expect(page.getByText('Google hosted Gemma is not configured',{exact:true})).toHaveCount(0);
 });
 
  test('late hosted status respects an explicit local choice',async({page})=>{

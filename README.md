@@ -91,7 +91,7 @@ Hosted integration is implemented and mock-tested; **real-model verification of 
 
 ## Deploying to Vercel
 
-Deployment support is implemented but has not yet been verified on Vercel. No deployment was created by the agent.
+The first user-created Vercel deployment of commit 3821eed failed at function startup because emitted JavaScript retained TypeScript import extensions. Server imports now target JavaScript, and a regression test compiles and runs all API entry points under plain Node ESM. This fix still needs a new deployment and verification; no deployment was created by the agent.
 
 1. Import this repository into a Vercel project. Select the Vite framework preset and Node.js 22.x or newer supported by Vercel. The checked-in `vercel.json` sets `npm ci`, `npm run build`, and the `dist` output directory.
 2. Privately add **GEMINI_API_KEY** under Project Settings → Environment Variables as a **Secret** for Production, and Preview if you want preview inference. Do not use a `VITE_` prefix. No credential file is required.

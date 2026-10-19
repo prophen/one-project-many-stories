@@ -1,5 +1,5 @@
-import { parseStories, prompt, validateFacts } from '../domain.ts';
-import { GOOGLE_MODEL } from '../providers.ts';
+import { parseStories, prompt, validateFacts } from '../domain.js';
+import { GOOGLE_MODEL } from '../providers.js';
 
 export async function generateGoogle(input: unknown, options: {
   apiKey?: string; consent: boolean; fetcher?: typeof fetch;
