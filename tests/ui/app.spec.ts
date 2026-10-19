@@ -60,3 +60,26 @@ test('separate source review, clean clipboard and download, edited mapping warni
  await page.getByRole('button',{name:'Facts',exact:true}).click();await page.getByLabel('Project name').fill('New notes');await page.getByRole('button',{name:'Stories',exact:true}).click();await expect(review).toContainText('earlier source snapshot');
  await page.setViewportSize({width:390,height:844});await expect(page.locator('body')).toHaveJSProperty('scrollWidth',390);
 });
+
+test('removing screen actions preserves keyboard focus on next, previous, or add action',async({page})=>{
+ await page.route('**/api/models',r=>r.fulfill({json:{models:[]}}));await page.goto('/');
+ for(let i=1;i<=3;i++){await page.getByRole('button',{name:'Add screen action',exact:true}).click();await page.getByLabel(`Screen action ${i}`,{exact:true}).fill(`Action ${i}`);}
+ await page.getByRole('button',{name:'Remove action 2',exact:true}).focus();await page.keyboard.press('Enter');
+ await expect(page.getByLabel('Screen action 2',{exact:true})).toHaveValue('Action 3');await expect(page.getByLabel('Screen action 2',{exact:true})).toBeFocused();
+ await page.getByRole('button',{name:'Remove action 2',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.getByLabel('Screen action 1',{exact:true})).toBeFocused();
+ await page.getByRole('button',{name:'Remove action 1',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.getByRole('button',{name:'Add screen action',exact:true})).toBeFocused();
+});
+
+test('stories reflow at 320px and maintain a level-one heading and ordered demo headings',async({page})=>{
+ await page.route('**/api/models',r=>r.fulfill({json:{models:['test-fixture-model']}}));
+ await page.route('**/api/generate',r=>{const action=r.request().postDataJSON().facts.demoActions[0];return r.fulfill({json:{stories:{...fixture,demo:[{actionId:action.id,factId:action.factId,narration:'This synthetic prototype includes a board, filters, and CSV export.'}]}}});});
+ await page.setViewportSize({width:320,height:800});await page.goto('/');await page.getByRole('button',{name:'Try sample'}).click();
+ await page.getByRole('button',{name:'Add screen action',exact:true}).click();await page.getByLabel('Screen action 1',{exact:true}).fill('Show synthetic board');await page.getByRole('checkbox',{name:'I confirm I can show action 1'}).check();await page.getByRole('button',{name:'Shape three stories'}).click();
+ await expect(page.getByRole('heading',{level:1,name:'Your stories'})).toBeFocused();
+ for(const format of ['Case study','Hiring summary','Demo outline']){
+  await page.getByRole('button',{name:format,exact:true}).click();await expect(page.locator('html')).toHaveJSProperty('scrollWidth',320);
+ }
+ await expect(page.getByRole('heading',{level:2,name:'Beat 1'})).toBeVisible();await expect(page.getByRole('heading',{level:2,name:'Facts each draft cites'})).toBeVisible();
+ const tableRegion=page.getByRole('region',{name:'Source coverage table',exact:true});await tableRegion.focus();await expect(tableRegion).toBeFocused();await page.keyboard.press('ArrowRight');await expect.poll(()=>tableRegion.evaluate(e=>e.scrollLeft)).toBeGreaterThan(0);
+ await page.getByRole('button',{name:'Edit text',exact:true}).click();await expect(page.locator('html')).toHaveJSProperty('scrollWidth',320);
+});
